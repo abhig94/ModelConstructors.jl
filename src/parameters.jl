@@ -455,31 +455,32 @@ function parameter(key::Symbol,
     end
 end
 
-function parameter(key::Symbol,
-                   value::Union{T1, V}, #value::Union{S,V},
-                   valuebounds::Interval{T2} = (value,value),
-                   transform_parameterization::Interval{T3} = (value,value),
-                   transform::U             = Untransformed(),
-                   prior::Union{NullableOrPriorUnivariate, NullableOrPriorMultivariate} = NullablePriorUnivariate();
-                   fixed::Bool              = true,
-                   scaling::Function        = identity,
-                   regimes::Dict{Symbol,OrderedDict{Int64,Any}} = Dict{Symbol,OrderedDict{Int64,Any}}(),
-                   description::String = "No description available.",
-                   tex_label::String = "") where {V<:Vector, T1 <: Real, T2 <: Real, T3 <: Real, U <:Transform}
-    warn_str = "The element types of the fields `value` ($(typeof(value))), `valuebounds` ($(eltype(valuebounds))), " *
-        "and `transform_parameterization` ($(eltype(transform_parameterization))) do not match. " *
-        "Attempting to convert all types to the same type as `value`. Note that the element type for the prior " *
-        "distribution should also be $(typeof(value))."
-    @warn warn_str
+# rather throw error here than mess with precompilation
+# function parameter(key::Symbol,
+#                    value::Union{T1, V}, #value::Union{S,V},
+#                    valuebounds::Interval{T2} = (value,value),
+#                    transform_parameterization::Interval{T3} = (value,value),
+#                    transform::U             = Untransformed(),
+#                    prior::Union{NullableOrPriorUnivariate, NullableOrPriorMultivariate} = NullablePriorUnivariate();
+#                    fixed::Bool              = true,
+#                    scaling::Function        = identity,
+#                    regimes::Dict{Symbol,OrderedDict{Int64,Any}} = Dict{Symbol,OrderedDict{Int64,Any}}(),
+#                    description::String = "No description available.",
+#                    tex_label::String = "") where {V<:Vector, T1 <: Real, T2 <: Real, T3 <: Real, U <:Transform}
+#     warn_str = "The element types of the fields `value` ($(typeof(value))), `valuebounds` ($(eltype(valuebounds))), " *
+#         "and `transform_parameterization` ($(eltype(transform_parameterization))) do not match. " *
+#         "Attempting to convert all types to the same type as `value`. Note that the element type for the prior " *
+#         "distribution should also be $(typeof(value))."
+#     @warn warn_str
 
-    valuebounds_new = (convert(T1, valuebounds[1]), convert(T1, valuebounds[2]))
-    transform_parameterization_new = (convert(T1, transform_parameterization[1]),
-                                      convert(T1, transform_parameterization[2]))
+#     valuebounds_new = (convert(T1, valuebounds[1]), convert(T1, valuebounds[2]))
+#     transform_parameterization_new = (convert(T1, transform_parameterization[1]),
+#                                       convert(T1, transform_parameterization[2]))
 
-    return parameter(key, value, valuebounds_new, transform_parameterization_new,
-                     transform, prior; fixed = fixed, scaling = scaling,
-                     regimes = regimes, description = description, tex_label = tex_label)
-end
+#     return parameter(key, value, valuebounds_new, transform_parameterization_new,
+#                      transform, prior; fixed = fixed, scaling = scaling,
+#                      regimes = regimes, description = description, tex_label = tex_label)
+# end
 
 function parameter_ad(key::Symbol,
                       value::Union{S,V},
@@ -903,8 +904,9 @@ function transform_to_real_line(p::ParameterAD{S,<:Number,Exponential}, x::S = p
     b + (1 ./ c) * log(x-a)
 end
 
-transform_to_real_line(pvec::ParameterVector, values::Vector{S}) where S  = map(transform_to_real_line, pvec, values)
-transform_to_real_line(pvec::ParameterVector{S}) where S = map(transform_to_real_line, pvec)
+# old(?) non-regime methods
+# transform_to_real_line(pvec::ParameterVector, values::Vector{S}) where S  = map(transform_to_real_line, pvec, values)
+# transform_to_real_line(pvec::ParameterVector{S}) where S = map(transform_to_real_line, pvec)
 
 transform_to_real_line(p::Parameter{T,Untransformed}, x::T = p.value) where T = x
 function transform_to_real_line(p::Parameter{T,SquareRoot}, x::T = p.value) where T
@@ -1101,11 +1103,11 @@ for f in (:(Base.exp),
           :(Base.:<=),
           :(Base.:>=))
 
-    @eval ($f)(p::UnscaledOrSteadyState) = ($f)(p.value)
+    # @eval ($f)(p::UnscaledOrSteadyState) = ($f)(p.value)
     @eval ($f)(p::ScaledParameterAD) = ($f)(p.scaledvalue)
 
     if f != :(Base.:-)
-        @eval ($f)(p::UnscaledOrSteadyState, x::Number) = ($f)(p.value, x)
+        # @eval ($f)(p::UnscaledOrSteadyState, x::Number) = ($f)(p.value, x)
         @eval ($f)(p::ScaledParameterAD, x::Number) = ($f)(p.scaledvalue, x)
     end
 end
